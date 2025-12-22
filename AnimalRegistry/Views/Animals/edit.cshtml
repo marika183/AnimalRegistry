@@ -1,0 +1,155 @@
+﻿@model AnimalRegistry.Models.Animal
+
+@{
+    ViewData["Title"] = "Edycja danych urzędowych";
+    // Logika blokady: jeśli status jest zatwierdzony, blokujemy edycję danych podstawowych
+    bool isLocked = Model.Status == AnimalStatus.Zatwierdzony;
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0 mx-auto" style="max-width: 900px;">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <h3 class="mb-0">📝 Edycja wpisu: @Model.Species</h3>
+            <span class="badge bg-light text-primary">ID: @Model.Id</span>
+        </div>
+        <div class="card-body p-4">
+            @* KLUCZOWE: Dodano enctype="multipart/form-data" dla obsługi PDF *@
+            <form asp-action="Edit" enctype="multipart/form-data">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                @* Kluczowe ukryte pola *@
+                <input type="hidden" asp-for="Id" />
+                <input type="hidden" asp-for="OwnerId" />
+
+                <div class="row">
+                    <div class="col-md-6 border-end">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">Dane podstawowe</h5>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Species" class="control-label fw-bold"></label>
+                            @* Pole zablokowane po zatwierdzeniu *@
+                            <input asp-for="Species" class="form-control" readonly="@(isLocked ? "readonly" : null)" />
+                            <span asp-validation-for="Species" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="IdentificationNumber" class="control-label fw-bold"></label>
+                            @* Pole zablokowane po zatwierdzeniu *@
+                            <input asp-for="IdentificationNumber" class="form-control" readonly="@(isLocked ? "readonly" : null)" />
+                            <span asp-validation-for="IdentificationNumber" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="DateOfBirth" class="control-label fw-bold"></label>
+                            @* Pole zablokowane po zatwierdzeniu *@
+                            <input asp-for="DateOfBirth" class="form-control" type="date"
+                                   value="@Model.DateOfBirth.ToString("yyyy-MM-dd")"
+                                   readonly="@(isLocked ? "readonly" : null)" />
+                            <span asp-validation-for="DateOfBirth" class="text-danger"></span>
+                        </div>
+
+                        @* Pole daty zgonu - ZAWSZE EDYTOWALNE *@
+                        <div class="form-group mb-3 p-2 border border-danger rounded bg-light">
+                            <label asp-for="DateOfDeath" class="control-label fw-bold text-danger">Data zgonu (Zgłoś padnięcie)</label>
+                            <input asp-for="DateOfDeath" class="form-control border-danger" type="date"
+                                   value="@(Model.DateOfDeath.HasValue? Model.DateOfDeath.Value.ToString("yyyy-MM-dd") : "")" />
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h5 class="text-primary border-bottom pb-2 mb-3">Informacje urzędowe</h5>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="CountryOfOrigin" class="fw-bold"></label>
+                            @* Pole zablokowane po zatwierdzeniu *@
+                            <input asp-for="CountryOfOrigin" class="form-control" readonly="@(isLocked ? "readonly" : null)" />
+                            <span asp-validation-for="CountryOfOrigin" class="text-danger"></span>
+                        </div>
+
+                        @* Pole pliku PDF - ZAWSZE MOŻNA DOŁOŻYĆ NOWY *@
+                        <div class="form-group mb-3">
+                            <label class="fw-bold text-primary">Dokument weterynaryjny / Akt zgonu (PDF)</label>
+                            <input type="file" name="pdfFile" class="form-control" accept=".pdf" />
+                            @if (!string.IsNullOrEmpty(Model.VeterinaryCertificateUrl))
+                            {
+                                <small class="text-success fw-bold">✓ W systemie znajduje się już dokument PDF.</small>
+                            }
+                        </div>
+
+                        <div class="form-group mb-3">
+                            <label asp-for="Source" class="fw-bold"></label>
+                            <select asp-for="Source" class="form-control" disabled="@(isLocked ? "disabled" : null)">
+                                <option value="Urodzenie w hodowli">Urodzenie w hodowli</option>
+                                <option value="Zakup">Zakup</option>
+                                <option value="Import">Import</option>
+                                <option value="Darowizna">Darowizna</option>
+                            </select>
+                            @if (isLocked)
+                            {
+                                <input type="hidden" asp-for="Source" />
+                            }
+                        </div>
+
+                        @* STATUS - Panel urzędnika *@
+                        @if (User.IsInRole("Urzednik") || User.IsInRole("Urzędnik"))
+                        {
+                            <div class="form-group mt-4 p-3 border border-warning bg-light">
+                                <label asp-for="Status" class="fw-bold text-dark">Decyzja urzędnika (Status)</label>
+                                <select asp-for="Status" class="form-control border-warning"
+                                        asp-items="Html.GetEnumSelectList<AnimalRegistry.Models.AnimalStatus>()">
+                                </select>
+                            </div>
+                        }
+                        else
+                        {
+                            <input type="hidden" asp-for="Status" />
+                            <div class="mt-4 p-2 bg-light text-muted border rounded">
+                                <small>Status wniosku: <strong>@Model.Status</strong></small>
+                                @if (isLocked)
+                                {
+                                    <br />
+                            
+                                    <span class="badge bg-info text-dark mt-1">Dane podstawowe zablokowane</span>
+                                }
+                            </div>
+                        }
+                   
+                    </div>
+
+
+                    @* ... reszta kodu details bez zmian ... *@
+
+                    <div class="card-footer bg-white border-0 text-center pb-4">
+                        <a asp-action="Index" class="btn btn-secondary px-4 shadow-sm">
+                            <i class="bi bi-arrow-left"></i> Powrót
+                        </a>
+
+                        @* LOGIKA: Jeśli zwierzę NIE JEST zarchiwizowane, pokaż przycisk edycji *@
+                        @if (Model.Status != AnimalStatus.Zarchiwizowany)
+                        {
+                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4 shadow-sm ms-2">
+                                <i class="bi bi-pencil-square"></i> Edytuj
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="badge bg-secondary p-2 ms-2">
+                                <i class="bi bi-lock-fill"></i> Rekord archiwalny - Edycja zablokowana
+                            </span>
+                        }
+                    </div>
+
+                </div>
+
+                <div class="form-group mt-4 text-center border-top pt-3">
+                    <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">Zapisz zmiany</button>
+                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4 ms-2">Anuluj</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,139 @@
+﻿@model AnimalRegistry.Models.Animal
+
+@{
+    ViewData["Title"] = "Szczegóły zwierzęcia";
+    bool isArchived = Model.Status == AnimalStatus.Zarchiwizowany;
+}
+
+<div class="container mt-4">
+    <div class="card shadow border-0 mx-auto" style="max-width: 1000px;">
+        @* Nagłówek: Kolor zależy od statusu (szary dla archiwum) *@
+        <div class="card-header @(isArchived ? "bg-secondary" : "bg-primary") text-white d-flex justify-content-between align-items-center py-3">
+            <h3 class="mb-0">
+                <i class="bi @(isArchived ? "bi-archive" : "bi-search")"></i>
+                @(isArchived ? "Rejestr Archiwalny" : "Pełne dane"): @Model.Species
+            </h3>
+            <span class="badge @(Model.Status == AnimalStatus.Zatwierdzony ? "bg-success" : (isArchived ? "bg-dark" : "bg-warning text-dark")) p-2 px-3 shadow-sm">
+                Status: @Model.Status
+            </span>
+        </div>
+
+        <div class="card-body p-4">
+            <div class="row">
+                <div class="col-md-7 border-end">
+                    <h5 class="@(isArchived ? "text-secondary" : "text-primary") mb-3 border-bottom pb-2">
+                        <i class="bi bi-info-square"></i> Metryka i pochodzenie
+                    </h5>
+                    <dl class="row">
+                        <dt class="col-sm-5">Nr identyfikacyjny:</dt>
+                        <dd class="col-sm-7"><code>@Model.IdentificationNumber</code></dd>
+
+                        <dt class="col-sm-5">Data urodzenia:</dt>
+                        <dd class="col-sm-7">@Model.DateOfBirth.ToShortDateString()</dd>
+
+                        <dt class="col-sm-5">Kraj pochodzenia:</dt>
+                        <dd class="col-sm-7">@Model.CountryOfOrigin</dd>
+
+                        <dt class="col-sm-5">Źródło pochodzenia:</dt>
+                        <dd class="col-sm-7">@Model.Source</dd>
+
+                        <dt class="col-sm-5 @(isArchived ? "" : "text-primary")">Cel przetrzymywania:</dt>
+                        <dd class="col-sm-7 fw-bold">@Model.Purpose</dd>
+
+                        <dt class="col-sm-5">Właściciel / Hodowca:</dt>
+                        <dd class="col-sm-7"><strong>@(Model.Owner?.UserName ?? "Brak danych")</strong></dd>
+
+                        @if (Model.DateOfDeath.HasValue)
+                        {
+                            <dt class="col-sm-5 text-danger border-top pt-2">Data zgonu:</dt>
+                            <dd class="col-sm-7 text-danger fw-bold border-top pt-2">@Model.DateOfDeath.Value.ToShortDateString()</dd>
+                        }
+                    </dl>
+                </div>
+
+                <div class="col-md-5 text-center bg-light p-4 rounded d-flex flex-column justify-content-center border">
+                    <h5 class="text-muted mb-3"><i class="bi bi-file-earmark-pdf"></i> Załączona dokumentacja</h5>
+                    <hr />
+                    @if (!string.IsNullOrEmpty(Model.VeterinaryCertificateUrl))
+                    {
+                        <div class="py-2">
+                            <i class="bi bi-file-pdf-fill text-danger" style="font-size: 5rem;"></i>
+                            <p class="mt-2 fw-bold small text-truncate text-muted">@Model.VeterinaryCertificateUrl</p>
+
+                            <a href="~/uploads/@Model.VeterinaryCertificateUrl"
+                               target="_blank"
+                               class="btn @(isArchived ? "btn-outline-dark" : "btn-danger") btn-lg shadow-sm mt-2">
+                                <i class="bi bi-eye"></i> Otwórz dokument PDF
+                            </a>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="py-4 text-muted">
+                            <i class="bi bi-file-earmark-x" style="font-size: 3rem;"></i>
+                            <p class="small mt-2">Brak dołączonej dokumentacji</p>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            @* Historia widoczna tylko dla aktywnych *@
+            @if (!isArchived)
+            {
+                <hr class="my-4" />
+                <div class="mt-4">
+                    <h5 class="text-primary mb-3 border-bottom pb-2"><i class="bi bi-clock-history"></i> Historia zmian wpisu</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover border shadow-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="30%">Data i godzina</th>
+                                    <th>Opis zdarzenia</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @if (Model.History != null && Model.History.Any())
+                                {
+                                    @foreach (var log in Model.History.OrderByDescending(h => h.ChangeDate))
+                                    {
+                                        <tr>
+                                            <td class="text-muted">@log.ChangeDate.ToLocalTime().ToString("g")</td>
+                                            <td>@log.ChangeDescription</td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+        </div>
+
+        @* Stopka z inteligentną nawigacją *@
+        <div class="card-footer bg-white border-0 text-center pb-4">
+
+            @if (isArchived)
+            {
+                @* Przycisk powrotu do Archiwum *@
+                <a asp-action="ArchivedIndex" class="btn btn-secondary px-4 shadow-sm">
+                    <i class="bi bi-arrow-left"></i> Wróć do Archiwum
+                </a>
+
+                <span class="badge bg-secondary p-3 ms-2 shadow-sm text-uppercase">
+                    <i class="bi bi-lock-fill"></i> Archiwum - Edycja Zablokowana
+                </span>
+            }
+            else
+            {
+                @* Przycisk powrotu do Listy Aktywnej *@
+                <a asp-action="Index" class="btn btn-secondary px-4 shadow-sm">
+                    <i class="bi bi-arrow-left"></i> Powrót do listy
+                </a>
+
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4 shadow-sm ms-2">
+                    <i class="bi bi-pencil-square"></i> Zarządzaj / Edytuj
+                </a>
+            }
+        </div>
+    </div>
+</div>

@@ -1,0 +1,79 @@
+﻿
+<style>
+    /* Sekcja tła z naturą */
+    .hero-wrap {
+        position: relative;
+        background: url('https://images.unsplash.com/photo-1441974231531-c6227db76b6e?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80') no-repeat center center;
+        background-size: cover;
+        height: 500px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: 20px;
+        box-shadow: inset 0 0 0 1000px rgba(0,0,0,0.2); /* Delikatne przyciemnienie obrazka */
+    }
+
+    .hero-text {
+        text-align: center;
+        color: white;
+        text-shadow: 2px 2px 10px rgba(0,0,0,0.5);
+    }
+
+    .brand-logo {
+        font-size: 80px;
+        background: white;
+        width: 130px;
+        height: 130px;
+        line-height: 130px;
+        border-radius: 50%;
+        display: inline-block;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    }
+
+    .info-section {
+        margin-top: -50px;
+        background: white;
+        border-radius: 15px;
+        padding: 40px;
+        box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 10;
+    }
+
+    .card-icon {
+        font-size: 40px;
+        color: #28a745;
+        margin-bottom: 15px;
+    }
+</style>
+
+<div class="hero-wrap">
+    <div class="hero-text">
+        <div class="brand-logo">🐾</div>
+        <h1 class="display-3 fw-bold">AnimalRegistry</h1>
+        <p class="lead fs-4">Oficjalny System Ewidencji i Ochrony Zwierząt</p>
+    </div>
+</div>
+
+<div class="container info-section text-center mb-5">
+   
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card-icon">🌲</div>
+            <h4>Ekologia</h4>
+            <p>Działamy w zgodzie z naturą, dbając o cyfrowe bezpieczeństwo Twoich danych.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="card-icon">🐕</div>
+            <h4>Opieka</h4>
+            <p>Każde zwierzę w naszej bazie posiada unikalną historię i przypisanego opiekuna.</p>
+        </div>
+        <div class="col-md-4">
+            <div class="card-icon">🛡️</div>
+            <h4>Bezpieczeństwo</h4>
+            <p>System nadzorowany przez urzędników gwarantuje rzetelność informacji.</p>
+        </div>
+    </div>
+</div>
