@@ -90,10 +90,11 @@
                             }
                         </div>
 
+                        
                         @* STATUS - Panel urzędnika *@
                         @if (User.IsInRole("Urzednik") || User.IsInRole("Urzędnik"))
                         {
-                            <div class="form-group mt-4 p-3 border border-warning bg-light">
+                            <div class="form-group mt-4 p-3 border border-warning bg-light rounded shadow-sm">
                                 <label asp-for="Status" class="fw-bold text-dark">Decyzja urzędnika (Status)</label>
                                 <select asp-for="Status" class="form-control border-warning"
                                         asp-items="Html.GetEnumSelectList<AnimalRegistry.Models.AnimalStatus>()">
@@ -103,48 +104,38 @@
                         else
                         {
                             <input type="hidden" asp-for="Status" />
-                            <div class="mt-4 p-2 bg-light text-muted border rounded">
-                                <small>Status wniosku: <strong>@Model.Status</strong></small>
+                            <div class="mt-4 p-3 bg-light text-muted border rounded">
+                                <i class="bi bi-info-circle"></i> Status wniosku: <span class="badge bg-secondary">@Model.Status</span>
                                 @if (isLocked)
                                 {
                                     <br />
-                            
-                                    <span class="badge bg-info text-dark mt-1">Dane podstawowe zablokowane</span>
+                                    <span class="badge bg-info text-dark mt-1">Dane podstawowe zablokowane do edycji</span>
                                 }
                             </div>
                         }
-                   
-                    </div>
+                    </div> 
 
 
-                    @* ... reszta kodu details bez zmian ... *@
-
-                    <div class="card-footer bg-white border-0 text-center pb-4">
-                        <a asp-action="Index" class="btn btn-secondary px-4 shadow-sm">
-                            <i class="bi bi-arrow-left"></i> Powrót
-                        </a>
-
-                        @* LOGIKA: Jeśli zwierzę NIE JEST zarchiwizowane, pokaż przycisk edycji *@
+                    <div class="card-footer bg-white border-top text-center py-4">
                         @if (Model.Status != AnimalStatus.Zarchiwizowany)
                         {
-                            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning px-4 shadow-sm ms-2">
-                                <i class="bi bi-pencil-square"></i> Edytuj
-                            </a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">
+                                <i class="bi bi-check-circle"></i> Zapisz zmiany
+                            </button>
                         }
                         else
                         {
-                            <span class="badge bg-secondary p-2 ms-2">
+                            <div class="alert alert-secondary d-inline-block px-4">
                                 <i class="bi bi-lock-fill"></i> Rekord archiwalny - Edycja zablokowana
-                            </span>
+                            </div>
                         }
+
+                        <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4 ms-2 shadow-sm">
+                            <i class="bi bi-x-circle"></i> Anuluj i wróć
+                        </a>
                     </div>
 
-                </div>
-
-                <div class="form-group mt-4 text-center border-top pt-3">
-                    <button type="submit" class="btn btn-primary btn-lg px-5 shadow-sm">Zapisz zmiany</button>
-                    <a asp-action="Index" class="btn btn-outline-secondary btn-lg px-4 ms-2">Anuluj</a>
-                </div>
+                </div> 
             </form>
         </div>
     </div>

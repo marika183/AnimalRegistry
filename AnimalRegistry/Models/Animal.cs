@@ -23,7 +23,7 @@ namespace AnimalRegistry.Models
         [Required(ErrorMessage = "Data urodzenia jest wymagana")]
         [DataType(DataType.Date)]
         [Display(Name = "Data urodzenia")]
-        public DateTime DateOfBirth { get; set; }
+        public DateTime DateOfBirth { get; set; } = DateTime.Now;
 
         [Display(Name = "Data zgonu")]
         [DataType(DataType.Date)]

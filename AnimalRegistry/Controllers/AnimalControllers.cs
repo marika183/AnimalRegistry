@@ -166,78 +166,85 @@ namespace AnimalRegistry.Controllers
 
         // 7. EDYCJA (POST)
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
+[ValidateAntiForgeryToken]
+public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
+{
+    if (id != animal.Id) return NotFound();
+
+    var original = await _context.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
+    if (original == null) return NotFound();
+
+    var user = await _userManager.GetUserAsync(User);
+    bool isUrzednik = await _userManager.IsInRoleAsync(user, "Urzednik") ||
+                      await _userManager.IsInRoleAsync(user, "Urzędnik");
+
+    // Przypisanie stałych wartości
+    animal.OwnerId = original.OwnerId;
+    if (!isUrzednik) animal.Status = original.Status;
+
+    // BLOKADA DANYCH DLA ZATWIERDZONYCH (jeśli nie jesteś urzędnikiem)
+    if (original.Status == AnimalStatus.Zatwierdzony && !isUrzednik)
+    {
+        animal.Species = original.Species;
+        animal.IdentificationNumber = original.IdentificationNumber;
+        animal.DateOfBirth = original.DateOfBirth;
+        animal.CountryOfOrigin = original.CountryOfOrigin;
+        animal.Source = original.Source; // Dodałem blokadę źródła
+    }
+
+    ModelState.Remove("Owner");
+    ModelState.Remove("OwnerId");
+    ModelState.Remove("History");
+
+    if (ModelState.IsValid)
+    {
+        try
         {
-            if (id != animal.Id) return NotFound();
+            List<string> changes = new List<string>();
 
-            var original = await _context.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
-            if (original == null) return NotFound();
-
-            var user = await _userManager.GetUserAsync(User);
-            bool isUrzednik = await _userManager.IsInRoleAsync(user, "Urzednik") ||
-                              await _userManager.IsInRoleAsync(user, "Urzędnik");
-
-            animal.OwnerId = original.OwnerId;
-            if (!isUrzednik) animal.Status = original.Status;
-
-            if (original.Status == AnimalStatus.Zatwierdzony)
+            // Obsługa pliku PDF
+            if (pdfFile != null && pdfFile.Length > 0)
             {
-                animal.Species = original.Species;
-                animal.IdentificationNumber = original.IdentificationNumber;
-                animal.DateOfBirth = original.DateOfBirth;
-                animal.CountryOfOrigin = original.CountryOfOrigin;
-                animal.Status = original.Status;
+                animal.VeterinaryCertificateUrl = await SaveFile(pdfFile);
+                changes.Add("Zaktualizowano dokument PDF");
+            }
+            else
+            {
+                animal.VeterinaryCertificateUrl = original.VeterinaryCertificateUrl;
             }
 
-            ModelState.Remove("Owner");
-            ModelState.Remove("OwnerId");
-            ModelState.Remove("History");
+            // LOGIKA SPRAWDZANIA ZMIAN (Dodałem Source i CountryOfOrigin)
+            if (original.Species != animal.Species) changes.Add($"Gatunek: '{original.Species}' -> '{animal.Species}'");
+            if (original.IdentificationNumber != animal.IdentificationNumber) changes.Add($"Nr ident.: '{original.IdentificationNumber}' -> '{animal.IdentificationNumber}'");
+            if (original.DateOfBirth.Date != animal.DateOfBirth.Date) changes.Add($"Data ur.: {original.DateOfBirth.ToShortDateString()} -> {animal.DateOfBirth.ToShortDateString()}");
+            if (original.DateOfDeath != animal.DateOfDeath) changes.Add($"Data zgonu: {(original.DateOfDeath?.ToShortDateString() ?? "brak")} -> {(animal.DateOfDeath?.ToShortDateString() ?? "brak")}");
+            if (original.Status != animal.Status) changes.Add($"Status: {original.Status} -> {animal.Status}");
+            
+            // NOWE LINIE - Bez nich się nie zapisze!
+            if (original.CountryOfOrigin != animal.CountryOfOrigin) changes.Add($"Kraj: '{original.CountryOfOrigin}' -> '{animal.CountryOfOrigin}'");
+            if (original.Source != animal.Source) changes.Add($"Źródło: '{original.Source}' -> '{animal.Source}'");
 
-            if (ModelState.IsValid)
+            if (changes.Any())
             {
-                try
+                _context.Update(animal);
+                _context.AnimalHistories.Add(new AnimalHistory
                 {
-                    List<string> changes = new List<string>();
-
-                    if (pdfFile != null && pdfFile.Length > 0)
-                    {
-                        animal.VeterinaryCertificateUrl = await SaveFile(pdfFile);
-                        changes.Add("Zaktualizowano dokument PDF");
-                    }
-                    else
-                    {
-                        animal.VeterinaryCertificateUrl = original.VeterinaryCertificateUrl;
-                    }
-
-                    // Sprawdzanie zmian...
-                    if (original.Species != animal.Species) changes.Add($"Gatunek: '{original.Species}' -> '{animal.Species}'");
-                    if (original.IdentificationNumber != animal.IdentificationNumber) changes.Add($"Nr ident.: '{original.IdentificationNumber}' -> '{animal.IdentificationNumber}'");
-                    if (original.DateOfBirth.Date != animal.DateOfBirth.Date) changes.Add($"Data ur.: {original.DateOfBirth.ToShortDateString()} -> {animal.DateOfBirth.ToShortDateString()}");
-                    if (original.DateOfDeath != animal.DateOfDeath) changes.Add($"Data zgonu: {(original.DateOfDeath?.ToShortDateString() ?? "brak")} -> {(animal.DateOfDeath?.ToShortDateString() ?? "brak")}");
-                    if (original.Status != animal.Status) changes.Add($"Status: {original.Status} -> {animal.Status}");
-
-                    if (changes.Any())
-                    {
-                        _context.Update(animal);
-                        _context.AnimalHistories.Add(new AnimalHistory
-                        {
-                            AnimalId = animal.Id,
-                            ChangeDescription = $"Edycja ({user.UserName}): " + string.Join(", ", changes),
-                            ChangeDate = DateTime.Now
-                        });
-                        await _context.SaveChangesAsync();
-                    }
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!_context.Animals.Any(e => e.Id == animal.Id)) return NotFound();
-                    else throw;
-                }
-                return RedirectToAction(nameof(Index));
+                    AnimalId = animal.Id,
+                    ChangeDescription = $"Edycja ({user.UserName}): " + string.Join(", ", changes),
+                    ChangeDate = DateTime.Now
+                });
+                await _context.SaveChangesAsync();
             }
-            return View(animal);
         }
+        catch (DbUpdateConcurrencyException)
+        {
+            if (!_context.Animals.Any(e => e.Id == animal.Id)) return NotFound();
+            else throw;
+        }
+        return RedirectToAction(nameof(Index));
+    }
+    return View(animal);
+}
 
         // 8. ARCHIWIZACJA
         public async Task<IActionResult> Archive(int id)

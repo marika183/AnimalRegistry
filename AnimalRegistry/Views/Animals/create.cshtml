@@ -34,7 +34,7 @@
 
                         <div class="form-group mb-3">
                             <label asp-for="DateOfBirth" class="control-label fw-bold"></label>
-                            <input asp-for="DateOfBirth" class="form-control" type="date" />
+                            <input asp-for="DateOfBirth" class="form-control" type="date" value="@Model.DateOfBirth.ToString("yyyy-MM-dd")" />
                             <span asp-validation-for="DateOfBirth" class="text-danger"></span>
                         </div>
                     </div>
@@ -61,6 +61,7 @@
                         <div class="form-group mb-3">
                             <label asp-for="Purpose" class="fw-bold"></label>
                             <select asp-for="Purpose" class="form-select">
+                                <option value="">-- Wybierz cel --</option>
                                 <option value="Hobbystyczny">Hobbystyczny</option>
                                 <option value="Hodowlany">Hodowlany</option>
                                 <option value="Edukacyjny">Edukacyjny</option>
