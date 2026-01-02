@@ -2,7 +2,7 @@
 
 @{
     ViewData["Title"] = "Edycja danych urzędowych";
-    // Logika blokady: jeśli status jest zatwierdzony, blokujemy edycję danych podstawowych
+    
     bool isLocked = Model.Status == AnimalStatus.Zatwierdzony;
 }
 
@@ -13,11 +13,11 @@
             <span class="badge bg-light text-primary">ID: @Model.Id</span>
         </div>
         <div class="card-body p-4">
-            @* KLUCZOWE: Dodano enctype="multipart/form-data" dla obsługi PDF *@
+            
             <form asp-action="Edit" enctype="multipart/form-data">
                 <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
-                @* Kluczowe ukryte pola *@
+                
                 <input type="hidden" asp-for="Id" />
                 <input type="hidden" asp-for="OwnerId" />
 
@@ -27,28 +27,28 @@
 
                         <div class="form-group mb-3">
                             <label asp-for="Species" class="control-label fw-bold"></label>
-                            @* Pole zablokowane po zatwierdzeniu *@
+                            
                             <input asp-for="Species" class="form-control" readonly="@(isLocked ? "readonly" : null)" />
                             <span asp-validation-for="Species" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
                             <label asp-for="IdentificationNumber" class="control-label fw-bold"></label>
-                            @* Pole zablokowane po zatwierdzeniu *@
+                            
                             <input asp-for="IdentificationNumber" class="form-control" readonly="@(isLocked ? "readonly" : null)" />
                             <span asp-validation-for="IdentificationNumber" class="text-danger"></span>
                         </div>
 
                         <div class="form-group mb-3">
                             <label asp-for="DateOfBirth" class="control-label fw-bold"></label>
-                            @* Pole zablokowane po zatwierdzeniu *@
+                            
                             <input asp-for="DateOfBirth" class="form-control" type="date"
                                    value="@Model.DateOfBirth.ToString("yyyy-MM-dd")"
                                    readonly="@(isLocked ? "readonly" : null)" />
                             <span asp-validation-for="DateOfBirth" class="text-danger"></span>
                         </div>
 
-                        @* Pole daty zgonu - ZAWSZE EDYTOWALNE *@
+                       
                         <div class="form-group mb-3 p-2 border border-danger rounded bg-light">
                             <label asp-for="DateOfDeath" class="control-label fw-bold text-danger">Data zgonu (Zgłoś padnięcie)</label>
                             <input asp-for="DateOfDeath" class="form-control border-danger" type="date"
@@ -61,12 +61,12 @@
 
                         <div class="form-group mb-3">
                             <label asp-for="CountryOfOrigin" class="fw-bold"></label>
-                            @* Pole zablokowane po zatwierdzeniu *@
+                            
                             <input asp-for="CountryOfOrigin" class="form-control" readonly="@(isLocked ? "readonly" : null)" />
                             <span asp-validation-for="CountryOfOrigin" class="text-danger"></span>
                         </div>
 
-                        @* Pole pliku PDF - ZAWSZE MOŻNA DOŁOŻYĆ NOWY *@
+                       
                         <div class="form-group mb-3">
                             <label class="fw-bold text-primary">Dokument weterynaryjny / Akt zgonu (PDF)</label>
                             <input type="file" name="pdfFile" class="form-control" accept=".pdf" />
@@ -91,7 +91,7 @@
                         </div>
 
                         
-                        @* STATUS - Panel urzędnika *@
+                        
                         @if (User.IsInRole("Urzednik") || User.IsInRole("Urzędnik"))
                         {
                             <div class="form-group mt-4 p-3 border border-warning bg-light rounded shadow-sm">

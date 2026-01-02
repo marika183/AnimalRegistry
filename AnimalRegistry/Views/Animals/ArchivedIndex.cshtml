@@ -20,7 +20,7 @@
         <table class="table table-sm table-hover shadow-sm bg-white border">
             <thead class="table-secondary">
                 <tr>
-                    @* Nagłówki z linkami do sortowania *@
+                   
                     <th>
                         <a asp-action="ArchivedIndex" asp-route-sortOrder="@ViewData["NumberSortParm"]" class="text-dark text-decoration-none">
                             Nr identyfikacyjny ↕
@@ -43,7 +43,7 @@
                         <td class="fw-bold"><code>@item.IdentificationNumber</code></td>
                         <td>@item.Owner?.UserName</td>
                         <td class="text-danger fw-bold">
-                            @* Bezpieczne wyświetlanie daty *@
+                            
                             @(item.DateOfDeath.HasValue? item.DateOfDeath.Value.ToShortDateString() : "Brak danych")
                         </td>
                         <td class="text-center">

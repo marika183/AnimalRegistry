@@ -22,7 +22,7 @@
             <tr>
                 <td class="fw-bold">@item.Species</td>
                 <td><code>@item.IdentificationNumber</code></td>
-                @* NOWA KOLUMNA: Właściciel *@
+                
                 <td>@item.Owner?.UserName</td>
                 <td>
                     <span class="badge @(item.Status == AnimalStatus.Zatwierdzony ? "bg-success" : "bg-warning text-dark")">

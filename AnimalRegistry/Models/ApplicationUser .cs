@@ -5,9 +5,7 @@ namespace AnimalRegistry.Models
 {
     public class ApplicationUser : IdentityUser
     {
-        // Tutaj dodajemy nowe pola:
-
-        [PersonalData] // Ta adnotacja oznacza, że są to dane wrażliwe użytkownika
+        [PersonalData] 
         public string? FirstName { get; set; }
 
         [PersonalData]
@@ -16,7 +14,6 @@ namespace AnimalRegistry.Models
         [PersonalData]
         public string? Address { get; set; }
 
-        // Relacja, którą już masz:
         public ICollection<Animal> Animals { get; set; } = new List<Animal>();
     }
 }

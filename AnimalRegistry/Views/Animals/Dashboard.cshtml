@@ -1,0 +1,42 @@
+﻿@{
+    ViewData["Title"] = "Statystyki Systemu";
+}
+
+<div class="container mt-4">
+    <h2>📊 Statystyki </h2>
+    <hr />
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-dark text-white">Liczba zwierząt wg statusu</div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in ViewBag.StatusStats)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            @item.Name <strong>@item.Count</strong>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">Popularność gatunków (Zatwierdzone)</div>
+                <ul class="list-group list-group-flush">
+                    @foreach (var item in ViewBag.SpeciesStats)
+                    {
+                        <li class="list-group-item d-flex justify-content-between">
+                            @item.Species <span class="badge bg-primary">@item.Count szt.</span>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="mt-4 p-3 bg-light border rounded">
+        <strong>Łączna liczba rekordów w bazie:</strong> @ViewData["TotalCount"]
+    </div>
+</div>

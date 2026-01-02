@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Dynamic;
 
 namespace AnimalRegistry.Controllers
 {
@@ -19,13 +20,12 @@ namespace AnimalRegistry.Controllers
             _userManager = userManager;
         }
 
-        // 1. LISTA AKTYWNYCH ZWIERZĄT (Z SORTOWANIEM)
+        // LISTA AKTYWNYCH ZWIERZĄT
         public async Task<IActionResult> Index(string sortOrder)
         {
             var user = await _userManager.GetUserAsync(User);
             if (user == null) return Challenge();
 
-            // Przygotowanie parametrów dla linków w nagłówkach
             ViewData["CurrentSort"] = sortOrder;
             ViewData["SpeciesSortParm"] = String.IsNullOrEmpty(sortOrder) ? "species_desc" : "";
             ViewData["NumberSortParm"] = sortOrder == "Number" ? "number_desc" : "Number";
@@ -36,7 +36,7 @@ namespace AnimalRegistry.Controllers
                 .Include(a => a.Owner)
                 .Where(a => a.Status != AnimalStatus.Zarchiwizowany);
 
-            // Filtrowanie pod rolę
+            
             bool isUrzednik = await _userManager.IsInRoleAsync(user, "Urzednik") ||
                               await _userManager.IsInRoleAsync(user, "Urzędnik");
 
@@ -45,7 +45,6 @@ namespace AnimalRegistry.Controllers
                 query = query.Where(a => a.OwnerId == user.Id);
             }
 
-            // Logika sortowania
             query = sortOrder switch
             {
                 "species_desc" => query.OrderByDescending(a => a.Species),
@@ -61,7 +60,7 @@ namespace AnimalRegistry.Controllers
             return View(await query.ToListAsync());
         }
 
-        // 2. LISTA ZARCHIWIZOWANYCH (Z SORTOWANIEM)
+        // LISTA ZARCHIWIZOWANYCH
         public async Task<IActionResult> ArchivedIndex(string sortOrder)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -70,7 +69,6 @@ namespace AnimalRegistry.Controllers
 
             if (!isUrzednik) return Forbid();
 
-            // Parametry sortowania dla archiwum
             ViewData["NumberSortParm"] = String.IsNullOrEmpty(sortOrder) ? "number_desc" : "";
             ViewData["OwnerSortParm"] = sortOrder == "Owner" ? "owner_desc" : "Owner";
 
@@ -90,7 +88,7 @@ namespace AnimalRegistry.Controllers
             return View(await archivedQuery.ToListAsync());
         }
 
-        // 3. SZCZEGÓŁY I HISTORIA
+        // SZCZEGÓŁY I HISTORIA
         public async Task<IActionResult> Details(int? id)
         {
             if (id == null) return NotFound();
@@ -105,13 +103,13 @@ namespace AnimalRegistry.Controllers
             return View(animal);
         }
 
-        // 4. REJESTRACJA (GET)
+        //  REJESTRACJA (GET)
         public IActionResult Create()
         {
             return View(new Animal());
         }
 
-        // 5. REJESTRACJA (POST)
+        // REJESTRACJA (POST)
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Animal animal, IFormFile? pdfFile)
@@ -166,9 +164,9 @@ namespace AnimalRegistry.Controllers
 
         // 7. EDYCJA (POST)
         [HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
-{
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
+    {
     if (id != animal.Id) return NotFound();
 
     var original = await _context.Animals.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
@@ -178,18 +176,16 @@ public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
     bool isUrzednik = await _userManager.IsInRoleAsync(user, "Urzednik") ||
                       await _userManager.IsInRoleAsync(user, "Urzędnik");
 
-    // Przypisanie stałych wartości
     animal.OwnerId = original.OwnerId;
     if (!isUrzednik) animal.Status = original.Status;
 
-    // BLOKADA DANYCH DLA ZATWIERDZONYCH (jeśli nie jesteś urzędnikiem)
-    if (original.Status == AnimalStatus.Zatwierdzony && !isUrzednik)
+   if (original.Status == AnimalStatus.Zatwierdzony && !isUrzednik)
     {
         animal.Species = original.Species;
         animal.IdentificationNumber = original.IdentificationNumber;
         animal.DateOfBirth = original.DateOfBirth;
         animal.CountryOfOrigin = original.CountryOfOrigin;
-        animal.Source = original.Source; // Dodałem blokadę źródła
+        animal.Source = original.Source;
     }
 
     ModelState.Remove("Owner");
@@ -202,7 +198,6 @@ public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
         {
             List<string> changes = new List<string>();
 
-            // Obsługa pliku PDF
             if (pdfFile != null && pdfFile.Length > 0)
             {
                 animal.VeterinaryCertificateUrl = await SaveFile(pdfFile);
@@ -213,14 +208,12 @@ public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
                 animal.VeterinaryCertificateUrl = original.VeterinaryCertificateUrl;
             }
 
-            // LOGIKA SPRAWDZANIA ZMIAN (Dodałem Source i CountryOfOrigin)
             if (original.Species != animal.Species) changes.Add($"Gatunek: '{original.Species}' -> '{animal.Species}'");
             if (original.IdentificationNumber != animal.IdentificationNumber) changes.Add($"Nr ident.: '{original.IdentificationNumber}' -> '{animal.IdentificationNumber}'");
             if (original.DateOfBirth.Date != animal.DateOfBirth.Date) changes.Add($"Data ur.: {original.DateOfBirth.ToShortDateString()} -> {animal.DateOfBirth.ToShortDateString()}");
             if (original.DateOfDeath != animal.DateOfDeath) changes.Add($"Data zgonu: {(original.DateOfDeath?.ToShortDateString() ?? "brak")} -> {(animal.DateOfDeath?.ToShortDateString() ?? "brak")}");
             if (original.Status != animal.Status) changes.Add($"Status: {original.Status} -> {animal.Status}");
             
-            // NOWE LINIE - Bez nich się nie zapisze!
             if (original.CountryOfOrigin != animal.CountryOfOrigin) changes.Add($"Kraj: '{original.CountryOfOrigin}' -> '{animal.CountryOfOrigin}'");
             if (original.Source != animal.Source) changes.Add($"Źródło: '{original.Source}' -> '{animal.Source}'");
 
@@ -242,11 +235,11 @@ public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
             else throw;
         }
         return RedirectToAction(nameof(Index));
+         }
+        return View(animal);
     }
-    return View(animal);
-}
 
-        // 8. ARCHIWIZACJA
+        // ARCHIWIZACJA
         public async Task<IActionResult> Archive(int id)
         {
             var user = await _userManager.GetUserAsync(User);
@@ -286,5 +279,35 @@ public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
             }
             return fileName;
         }
+
+
+        // 9. ZAAWANSOWANE STATYSTYKI (Dla 5 punktów - bez osobnego modelu)
+        [Authorize(Roles = "Urzednik,Urzędnik")]
+        public async Task<IActionResult> Dashboard()
+        {
+            // ZAAWANSOWANY ORM: Grupowanie po statusie i zliczanie
+            ViewBag.StatusStats = await _context.Animals
+                .GroupBy(a => a.Status)
+                .Select(g => new { Name = g.Key.ToString(), Count = g.Count() })
+                .ToListAsync();
+
+            // ZAAWANSOWANY ORM: Grupowanie po gatunku (tylko zatwierdzone)
+            ViewBag.SpeciesStats = await _context.Animals
+                .Where(a => a.Status == AnimalStatus.Zatwierdzony)
+                .GroupBy(a => a.Species)
+                .Select(g => new { Species = g.Key, Count = g.Count() })
+                .OrderByDescending(x => x.Count)
+                .ToListAsync();
+
+            // Sumowanie
+            ViewData["TotalCount"] = await _context.Animals.CountAsync();
+
+            return View();
+        }
+
+
     }
-}
+
+
+
+}       

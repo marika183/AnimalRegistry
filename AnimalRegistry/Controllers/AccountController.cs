@@ -61,7 +61,6 @@ namespace AnimalRegistry.Controllers
         {
             if (ModelState.IsValid)
             {
-                // Tworzymy użytkownika i przypisujemy mu dane z formularza
                 var user = new ApplicationUser
                 {
                     UserName = model.Email,
@@ -75,7 +74,6 @@ namespace AnimalRegistry.Controllers
 
                 if (result.Succeeded)
                 {
-                    // Automatyczne przypisanie roli Hodowca
                     await _userManager.AddToRoleAsync(user, "Hodowca");
                     await _signInManager.SignInAsync(user, isPersistent: false);
                     return RedirectToAction("Index", "Animals");
