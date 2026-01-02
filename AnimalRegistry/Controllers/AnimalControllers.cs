@@ -145,7 +145,7 @@ namespace AnimalRegistry.Controllers
             return View(animal);
         }
 
-        // 6. EDYCJA (GET)
+        //  EDYCJA (GET)
         public async Task<IActionResult> Edit(int? id)
         {
             if (id == null) return NotFound();
@@ -162,7 +162,7 @@ namespace AnimalRegistry.Controllers
             return View(animal);
         }
 
-        // 7. EDYCJA (POST)
+        //  EDYCJA (POST)
         [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, Animal animal, IFormFile? pdfFile)
@@ -281,17 +281,16 @@ namespace AnimalRegistry.Controllers
         }
 
 
-        // 9. ZAAWANSOWANE STATYSTYKI (Dla 5 punktów - bez osobnego modelu)
+        // Sortowanie
         [Authorize(Roles = "Urzednik,Urzędnik")]
         public async Task<IActionResult> Dashboard()
         {
-            // ZAAWANSOWANY ORM: Grupowanie po statusie i zliczanie
+          
             ViewBag.StatusStats = await _context.Animals
                 .GroupBy(a => a.Status)
                 .Select(g => new { Name = g.Key.ToString(), Count = g.Count() })
                 .ToListAsync();
 
-            // ZAAWANSOWANY ORM: Grupowanie po gatunku (tylko zatwierdzone)
             ViewBag.SpeciesStats = await _context.Animals
                 .Where(a => a.Status == AnimalStatus.Zatwierdzony)
                 .GroupBy(a => a.Species)
@@ -299,7 +298,7 @@ namespace AnimalRegistry.Controllers
                 .OrderByDescending(x => x.Count)
                 .ToListAsync();
 
-            // Sumowanie
+          
             ViewData["TotalCount"] = await _context.Animals.CountAsync();
 
             return View();
